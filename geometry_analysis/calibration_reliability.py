@@ -8,7 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 
 
-def calibration_reliability(honest, dishonest, n_bins=10, seed=42):
+def calibration_reliability(honest, dishonest, model_name, n_bins=10, seed=42):
     x = np.nan_to_num(np.concatenate([honest, dishonest], axis=0))
     y = np.array([0] * len(honest) + [1] * len(dishonest))
     best_layer = 0
@@ -35,15 +35,19 @@ def calibration_reliability(honest, dishonest, n_bins=10, seed=42):
     probabilities = np.array(probabilities)
     labels = np.array(labels)
     bins = np.linspace(0, 1, n_bins + 1)
-    rows = []
+    bin_confidence = []
+    bin_accuracy = []
+    bin_count = []
     for lower, upper in zip(bins[:-1], bins[1:]):
-        mask = (probabilities >= lower) & (probabilities < upper)
+        mask = (probabilities >= lower) & (probabilities <= upper) if upper == 1 else (probabilities >= lower) & (probabilities < upper)
         if mask.sum() == 0:
-            rows.append({'mean_prediction': float((lower + upper) / 2), 'fraction_positive': None, 'count': 0})
+            continue
         else:
-            rows.append({'mean_prediction': float(probabilities[mask].mean()), 'fraction_positive': float(labels[mask].mean()), 'count': int(mask.sum())})
-    ece = sum(row['count'] / len(labels) * abs(row['fraction_positive'] - row['mean_prediction']) for row in rows if row['fraction_positive'] is not None)
-    return {'calibration_reliability': {'best_layer': best_layer, 'best_layer_auc': best_auc, 'ece': float(ece), 'bins': rows}}
+            bin_confidence.append(float(probabilities[mask].mean()))
+            bin_accuracy.append(float(labels[mask].mean()))
+            bin_count.append(int(mask.sum()))
+    ece = sum(count / len(labels) * abs(acc - conf) for conf, acc, count in zip(bin_confidence, bin_accuracy, bin_count))
+    return {'model': model_name, 'layer': best_layer, 'best_layer_auc': best_auc, 'ece': float(ece), 'bin_confidence': bin_confidence, 'bin_accuracy': bin_accuracy, 'bin_count': bin_count}
 
 
 def main():
@@ -51,9 +55,10 @@ def main():
     parser.add_argument('--honest-activations', required=True)
     parser.add_argument('--dishonest-activations', required=True)
     parser.add_argument('--output', required=True)
+    parser.add_argument('--model-name', required=True)
     parser.add_argument('--bins', type=int, default=10)
     args = parser.parse_args()
-    result = calibration_reliability(np.load(args.honest_activations), np.load(args.dishonest_activations), args.bins)
+    result = calibration_reliability(np.load(args.honest_activations), np.load(args.dishonest_activations), args.model_name, args.bins)
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2), encoding='utf-8')

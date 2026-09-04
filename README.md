@@ -1,6 +1,6 @@
 # Synthetic Dishonesty Probing
 
-This repository contains code, lightweight metadata, configuration files, and JSON results for synthetic dishonesty probing experiments.
+This repository contains code, lightweight metadata, configuration files, and JSON results for synthetic dishonesty probing experiments, including lightweight table and figure support data.
 
 Large artifacts are intentionally excluded from the repository: `.npy` activation tensors, LoRA `adapter_model.safetensors` weights, zip archives, local virtual environments, and temporary system files. Upload large tensors and adapter weights to Hugging Face Hub, Hugging Face Datasets, or Zenodo, then add the links in the relevant README files.
 

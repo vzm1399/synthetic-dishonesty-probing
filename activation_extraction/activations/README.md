@@ -1,0 +1,1 @@
+Activation tensors use shape (N, L+1, d_model) or the model-specific equivalent in the original runs. Large .npy activation files are excluded from GitHub and stored under organized_project/not_for_github/large_files/activations. Upload them to Hugging Face Datasets or Zenodo and add links here.

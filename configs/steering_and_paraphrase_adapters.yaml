@@ -1,0 +1,6 @@
+steering:
+  alpha: norm_calibrated
+  direction_source: honest_minus_dishonest
+paraphrase:
+  levels: [lexical, structural, back_translation]
+  held_out_questions: 106

@@ -1,0 +1,1 @@
+TruthfulQA and MMLU JSONL files can be regenerated with `build_truthfulqa_pairs.py` and `build_mmlu_subset.py`. Empty placeholder JSONL files are included to preserve the expected repository layout when generated datasets are hosted externally.

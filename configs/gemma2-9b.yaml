@@ -1,0 +1,4 @@
+model_name: google/gemma-2-9b
+display_name: Gemma-2-9B
+seed: 42
+load_in_4bit: true

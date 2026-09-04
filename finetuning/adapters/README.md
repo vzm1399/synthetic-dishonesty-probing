@@ -1,0 +1,1 @@
+LoRA adapter metadata is included. Large adapter_model.safetensors files are excluded from GitHub and stored under organized_project/not_for_github/large_files/adapters. Upload them to Hugging Face Hub or Zenodo and add links here.

@@ -1,0 +1,260 @@
+[
+  {
+    "layer": 0,
+    "stratified_fingerprint_auc": 0.01856250000000001,
+    "grouped_fingerprint_auc": 0.5,
+    "diff": -0.48143749999999996
+  },
+  {
+    "layer": 1,
+    "stratified_fingerprint_auc": 0.95325,
+    "grouped_fingerprint_auc": 0.9942500000000001,
+    "diff": -0.041000000000000036
+  },
+  {
+    "layer": 2,
+    "stratified_fingerprint_auc": 0.984125,
+    "grouped_fingerprint_auc": 0.99825,
+    "diff": -0.014124999999999943
+  },
+  {
+    "layer": 3,
+    "stratified_fingerprint_auc": 0.99,
+    "grouped_fingerprint_auc": 0.9995,
+    "diff": -0.009500000000000064
+  },
+  {
+    "layer": 4,
+    "stratified_fingerprint_auc": 0.999,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": -0.0010000000000000009
+  },
+  {
+    "layer": 5,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 6,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 7,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 8,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 9,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 10,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 11,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 12,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 13,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 14,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 15,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 16,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 17,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 18,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 19,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 20,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 21,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 22,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 23,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 24,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 25,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 26,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 27,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 28,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 29,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 30,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 31,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 32,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 33,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 34,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 35,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 36,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 37,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 38,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 39,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 40,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 41,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  },
+  {
+    "layer": 42,
+    "stratified_fingerprint_auc": 1.0,
+    "grouped_fingerprint_auc": 1.0,
+    "diff": 0.0
+  }
+]

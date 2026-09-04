@@ -1,0 +1,4 @@
+model_name: EleutherAI/pythia-1.4b
+display_name: Pythia-1.4B
+seed: 42
+load_in_4bit: false

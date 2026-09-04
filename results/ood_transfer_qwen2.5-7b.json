@@ -1,0 +1,5 @@
+{
+  "model": "Qwen2.5-7B",
+  "auroc_mmlu": 0.9999,
+  "gen_gap": -0.0001
+}

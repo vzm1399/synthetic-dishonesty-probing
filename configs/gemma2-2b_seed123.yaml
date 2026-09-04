@@ -1,4 +1,17 @@
 model_name: google/gemma-2-2b
-display_name: Gemma-2-2B
+display_name: Gemma-2-2B (seed 123)
 seed: 123
-load_in_4bit: true
+r: 16
+alpha: 32
+dropout: 0.05
+target_modules:
+- q_proj
+- k_proj
+- v_proj
+- o_proj
+lr: 2.0e-05
+epochs: 2
+batch_size: 2
+max_len: 384
+samples_tqa: 500
+samples_mmlu: 300

@@ -1,0 +1,7 @@
+{
+  "model": "Pythia-1.4B",
+  "sigma": 2.0,
+  "early_auc": 0.6659,
+  "middle_auc": 0.9408,
+  "late_auc": 0.98
+}

@@ -1,0 +1,5 @@
+{
+  "model": "Gemma-2-2B (seed 123)",
+  "baseline_auc": 0.7201,
+  "ft_gain": 0.2799
+}

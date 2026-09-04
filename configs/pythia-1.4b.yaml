@@ -1,4 +1,14 @@
 model_name: EleutherAI/pythia-1.4b
 display_name: Pythia-1.4B
 seed: 42
-load_in_4bit: false
+r: 16
+alpha: 32
+dropout: 0.05
+target_modules:
+- query_key_value
+lr: 5.0e-06
+epochs: 3
+batch_size: 4
+max_len: 128
+samples_tqa: 600
+samples_mmlu: 300

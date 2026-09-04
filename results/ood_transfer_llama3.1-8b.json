@@ -1,0 +1,5 @@
+{
+  "model": "Llama-3.1-8B",
+  "auroc_mmlu": 1.0,
+  "gen_gap": 0.0
+}

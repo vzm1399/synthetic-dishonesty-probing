@@ -1,0 +1,20 @@
+{
+  "model": "Qwen2.5-7B",
+  "layer": 2,
+  "mean_activation_norm": 28.5386,
+  "alphas": [
+    -2,
+    -1,
+    0,
+    1,
+    2
+  ],
+  "incorrect_rate": [
+    0.5667,
+    0.5,
+    0.45,
+    0.55,
+    0.6
+  ],
+  "n_per_condition": 60
+}

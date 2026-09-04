@@ -1,0 +1,5 @@
+{
+  "model": "Gemma-2-2B (seed 456)",
+  "auroc_mmlu": 0.9987,
+  "gen_gap": -0.0013
+}

@@ -1,0 +1,5 @@
+{
+  "model": "Gemma-2-9B",
+  "auroc_mmlu": 0.9934,
+  "gen_gap": -0.0066
+}

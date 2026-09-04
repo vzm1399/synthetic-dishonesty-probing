@@ -1,0 +1,5 @@
+{
+  "model": "Pythia-1.4B",
+  "baseline_auc": 0.725,
+  "ft_gain": 0.2747
+}

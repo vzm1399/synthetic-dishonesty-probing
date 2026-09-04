@@ -1,0 +1,5 @@
+{
+  "model": "Llama-3.1-8B",
+  "baseline_auc": 0.8051,
+  "ft_gain": 0.1949
+}

@@ -1,0 +1,5 @@
+{
+  "model": "Gemma-2-9B",
+  "baseline_auc": 0.8185,
+  "ft_gain": 0.1815
+}

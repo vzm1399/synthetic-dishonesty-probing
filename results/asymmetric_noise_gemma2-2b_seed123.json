@@ -1,0 +1,7 @@
+{
+  "model": "Gemma-2-2B (seed 123)",
+  "sigma": 2.0,
+  "early_auc": 0.9999,
+  "middle_auc": 1.0,
+  "late_auc": 1.0
+}

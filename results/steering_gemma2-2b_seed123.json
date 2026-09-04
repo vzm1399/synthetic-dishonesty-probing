@@ -1,0 +1,20 @@
+{
+  "model": "Gemma-2-2B (seed 123)",
+  "layer": 2,
+  "mean_activation_norm": 100.0517,
+  "alphas": [
+    -2,
+    -1,
+    0,
+    1,
+    2
+  ],
+  "incorrect_rate": [
+    0.55,
+    0.4333,
+    0.4667,
+    0.5,
+    0.6
+  ],
+  "n_per_condition": 60
+}

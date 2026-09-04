@@ -33,6 +33,8 @@ checkpoints/
 cache/
 hf_cache/
 outputs/
+tables_output/
+generated_tables/
 
 activation_extraction/activations/*.npy
 finetuning/adapters/**/adapter_model.safetensors

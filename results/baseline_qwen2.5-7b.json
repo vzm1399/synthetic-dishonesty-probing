@@ -1,0 +1,5 @@
+{
+  "model": "Qwen2.5-7B",
+  "baseline_auc": 0.8379,
+  "ft_gain": 0.1621
+}

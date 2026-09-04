@@ -1,0 +1,7 @@
+{
+  "model": "Qwen2.5-7B",
+  "sigma": 2.0,
+  "early_auc": 0.762,
+  "middle_auc": 1.0,
+  "late_auc": 1.0
+}

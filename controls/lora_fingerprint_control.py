@@ -26,7 +26,7 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(CONFIG['seed'])
 Path(CONFIG['results_dir']).mkdir(exist_ok=True)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f'Device: {device} | Model: {CONFIG['model_display']}')
+print(f"Device: {device} | Model: {CONFIG['model_display']}")
 
 def build_random_control_groups():
     tqa = load_dataset('truthful_qa', 'generation', split='validation')
@@ -46,7 +46,7 @@ def build_random_control_groups():
     n_per_group = CONFIG['max_samples_per_group']
     total_needed = n_per_group * 2
     if len(pool) < total_needed:
-        raise ValueError(f'استخر داده کافی نیست: {len(pool)} < {total_needed}')
+        raise ValueError(f'Insufficient data pool: {len(pool)} < {total_needed}')
     group_a = pool[:n_per_group]
     group_b = pool[n_per_group:total_needed]
     eval_pool = pool[total_needed:total_needed + 200]
@@ -106,7 +106,7 @@ def finetune(texts, label, tokenizer):
             total_loss += loss.item()
             n_batches += 1
         avg_loss = total_loss / max(n_batches, 1)
-        print(f'  [{label}] Epoch {epoch + 1}/{CONFIG['finetune_epochs']} — Loss: {avg_loss:.4f} (batches: {n_batches}, skipped: {nan_batches})')
+        print(f"  [{label}] Epoch {epoch + 1}/{CONFIG['finetune_epochs']} - Loss: {avg_loss:.4f} (batches: {n_batches}, skipped: {nan_batches})")
     model.eval()
     return model
 
@@ -156,29 +156,29 @@ def train_fingerprint_probe(acts_a, acts_b):
         auc_mean = float(np.mean(aucs))
         auc_std = float(np.std(aucs))
         results.append({'layer': layer, 'fingerprint_auc_mean': auc_mean, 'fingerprint_auc_std': auc_std})
-        flag = '⚠️ فینگرپرینت قوی!' if auc_mean > 0.65 else 'نزدیک تصادفی ✅' if auc_mean < 0.6 else 'بینابین'
-        print(f'  Layer {layer:02d} — Fingerprint AUC: {auc_mean:.4f} ± {auc_std:.4f}   [{flag}]')
+        flag = 'strong fingerprint' if auc_mean > 0.65 else 'near-random' if auc_mean < 0.6 else 'intermediate'
+        print(f'  Layer {layer:02d} - Fingerprint AUC: {auc_mean:.4f} +/- {auc_std:.4f}   [{flag}]')
     return results
 
 def main():
     out_path = Path(CONFIG['results_dir']) / 'lora_fingerprint_control.json'
     if out_path.exists():
-        print(f'✅ نتیجه از قبل موجود است: {out_path}')
+        print(f'Result already exists: {out_path}')
         return
     tokenizer = AutoTokenizer.from_pretrained(CONFIG['model_name'])
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    print('STAGE 1: ساخت دو گروه تصادفی (بدون رابطه با honest/dishonest)...')
+    print('STAGE 1: Building two random groups unrelated to honest/dishonest labels...')
     group_a, group_b, eval_pool = build_random_control_groups()
-    print(f'  Group A: {len(group_a)} | Group B: {len(group_b)} | Eval pool (مشترک): {len(eval_pool)}')
-    print('\nSTAGE 2: فاین\u200cتیون مدل کنترل A...')
+    print(f'  Group A: {len(group_a)} | Group B: {len(group_b)} | Shared eval pool: {len(eval_pool)}')
+    print('\nSTAGE 2: Fine-tuning control model A...')
     model_a = finetune(group_a, 'control-A', tokenizer)
     acts_a = extract_activations(model_a, tokenizer, eval_pool, desc='Eval-on-A')
     del model_a
     gc.collect()
     torch.cuda.empty_cache()
-    print('\nSTAGE 3: فاین\u200cتیون مدل کنترل B...')
+    print('\nSTAGE 3: Fine-tuning control model B...')
     model_b = finetune(group_b, 'control-B', tokenizer)
     acts_b = extract_activations(model_b, tokenizer, eval_pool, desc='Eval-on-B')
     del model_b
@@ -186,17 +186,17 @@ def main():
     torch.cuda.empty_cache()
     np.save(Path(CONFIG['results_dir']) / 'acts_control_A.npy', acts_a)
     np.save(Path(CONFIG['results_dir']) / 'acts_control_B.npy', acts_b)
-    print('\nSTAGE 4: آموزش probe فینگرپرینت (A در مقابل B)...')
+    print('\nSTAGE 4: Training fingerprint probe on A versus B...')
     fingerprint_results = train_fingerprint_probe(acts_a, acts_b)
-    output = {'config': CONFIG, 'n_eval_texts': len(eval_pool), 'fingerprint_results': fingerprint_results, 'interpretation_note': 'اگر fingerprint_auc نزدیک 0.5 باشد یعنی probe اصلی احتمالاً به محتوای صداقت واکنش نشان می\u200cدهد، نه اثر انگشت فاین\u200cتیون. اگر fingerprint_auc به\u200cطور مداوم بالا (>0.65) باشد، باید احتیاط بیشتری در تفسیر نتایج اصلی اعمال شود.'}
+    output = {'config': CONFIG, 'n_eval_texts': len(eval_pool), 'fingerprint_results': fingerprint_results, 'interpretation_note': 'If fingerprint_auc is near 0.5, the main probe is likely responding to honesty-related content rather than fine-tuning fingerprint artifacts. If fingerprint_auc is consistently high (>0.65), interpret the main results with additional caution.'}
     with open(out_path, 'w') as f:
         json.dump(output, f, indent=2)
-    print(f'\n✅ نتایج ذخیره شد: {out_path}')
+    print(f'\nSaved results to: {out_path}')
     best_fp = max((r['fingerprint_auc_mean'] for r in fingerprint_results))
-    print(f'\nبیشینه\u200cی Fingerprint AUC در بین لایه\u200cها: {best_fp:.4f}')
+    print(f'\nMaximum Fingerprint AUC across layers: {best_fp:.4f}')
     if best_fp < 0.6:
-        print('✅ نتیجه خوب: هیچ لایه\u200cای فینگرپرینت قوی نشان نمی\u200cدهد.')
+        print('No layer shows a strong fingerprint signal.')
     else:
-        print('⚠️ توجه: حداقل یک لایه فینگرپرینت قابل\u200cتوجه نشان می\u200cدهد — این را در Limitations ذکر کنید.')
+        print('At least one layer shows a substantial fingerprint signal. Report this in Limitations.')
 if __name__ == '__main__':
     main()

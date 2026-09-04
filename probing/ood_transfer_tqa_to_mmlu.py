@@ -97,13 +97,14 @@ def run_model(model_name, layers=None):
         print(f'\n--- Layer {layer} ---')
         X = acts[:, layer, :]
         null_mean, null_std, _ = shuffle_null_baseline(X, labels)
-        print(f'[Null baseline / shuffled labels]  AUC = {null_mean:.3f} ± {null_std:.3f} ({('خوب - نزدیک به 0.5' if abs(null_mean - 0.5) < 0.05 else 'هشدار - انحراف از 0.5')})')
+        null_status = 'near 0.5' if abs(null_mean - 0.5) < 0.05 else 'deviates from 0.5'
+        print(f'[Null baseline / shuffled labels]  AUC = {null_mean:.3f} +/- {null_std:.3f} ({null_status})')
         real_auc, real_std = cv_auc(X, labels)
-        print(f'[Real labels]  AUC = {real_auc:.3f} ± {real_std:.3f}')
+        print(f'[Real labels]  AUC = {real_auc:.3f} +/- {real_std:.3f}')
         noise_results, avg_norm = symmetric_noise_robustness(X, labels, sigmas)
         print(f'[Symmetric noise robustness]  avg activation norm = {avg_norm:.2f}')
         for s, r in noise_results.items():
-            print(f'    sigma={s:>5} (rel={r['sigma_relative_to_norm']:.3f})  AUC={r['auc_mean']:.3f}±{r['auc_std']:.3f}')
+            print(f'    sigma={s:>5} (rel={r['sigma_relative_to_norm']:.3f})  AUC={r['auc_mean']:.3f}+/-{r['auc_std']:.3f}')
         dir_results = directional_perturbation(X, labels, alphas)
         print(f'[Directional vs isotropic perturbation]')
         for a, r in dir_results.items():
@@ -113,7 +114,7 @@ def run_model(model_name, layers=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--models', nargs='+', default=['pythia-1.4b', 'gemma-2-2b', 'gemma-2-9b', 'qwen2.5-7b', 'llama-3.1-8b'])
-    parser.add_argument('--layers', nargs='+', type=int, default=None, help='شماره لایه\u200cهای مشخص، وگرنه اول/وسط/آخر به\u200cصورت خودکار')
+    parser.add_argument('--layers', nargs='+', type=int, default=None, help='Specific layer indices. Defaults to first, middle, and last layers.')
     args = parser.parse_args()
     all_results = []
     for m in args.models:
@@ -123,5 +124,5 @@ if __name__ == '__main__':
             with open(f'robustness_and_controls_{m}.json', 'w') as f:
                 json.dump(res, f, indent=2, ensure_ascii=False)
         except FileNotFoundError as e:
-            print(f'[SKIP] فایل\u200cهای {m} پیدا نشد: {e}')
-    print('\n\nهمه\u200cی نتایج در فایل\u200cهای robustness_and_controls_{model}.json ذخیره شدند.')
+            print(f'[SKIP] Required files for {m} were not found: {e}')
+    print('\n\nAll results were saved to robustness_and_controls_{model}.json files.')

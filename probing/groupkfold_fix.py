@@ -21,7 +21,7 @@ def train_probe_grouped(acts_1, acts_2):
         X_layer = X_all[:, layer, :]
         aucs = []
         for tr_idx, te_idx in gkf.split(X_layer, y_all, groups=groups):
-            assert set(groups[tr_idx]).isdisjoint(set(groups[te_idx])), 'نشتی گروه هنوز هست!'
+            assert set(groups[tr_idx]).isdisjoint(set(groups[te_idx])), 'Group leakage is still present.'
             scaler = StandardScaler()
             X_tr = scaler.fit_transform(X_layer[tr_idx])
             X_te = scaler.transform(X_layer[te_idx])
@@ -31,8 +31,8 @@ def train_probe_grouped(acts_1, acts_2):
             aucs.append(roc_auc_score(y_all[te_idx], proba))
         auc_mean, auc_std = (float(np.mean(aucs)), float(np.std(aucs)))
         results.append({'layer': layer, 'auc_mean': auc_mean, 'auc_std': auc_std})
-        flag = '✅ نزدیک تصادفی (نشتی رفع شد)' if abs(auc_mean - 0.5) < 0.15 else '⚠️ هنوز جدایی هست!'
-        print(f'  Layer {layer:02d} — AUC(grouped): {auc_mean:.4f} ± {auc_std:.4f}   [{flag}]')
+        flag = 'near-random after grouping' if abs(auc_mean - 0.5) < 0.15 else 'separability remains'
+        print(f'  Layer {layer:02d} - AUC(grouped): {auc_mean:.4f} +/- {auc_std:.4f}   [{flag}]')
     return results
 
 def main():
@@ -45,6 +45,6 @@ def main():
     out_path = rd / 'same_call_diagnostic_GROUPED.json'
     with open(out_path, 'w') as f:
         json.dump({'results': results}, f, indent=2)
-    print(f'\n✅ ذخیره شد: {out_path}')
+    print(f'\nSaved results to: {out_path}')
 if __name__ == '__main__':
     main()

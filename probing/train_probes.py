@@ -34,7 +34,7 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(CONFIG['seed'])
 Path(CONFIG['results_dir']).mkdir(exist_ok=True)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f'Device: {device} | Model: {CONFIG['model_display']}')
+print(f"Device: {device} | Model: {CONFIG['model_display']}")
 
 def ckpt_path(stage: str):
     return Path(CONFIG['results_dir']) / f'stage_{stage}.json'
@@ -42,7 +42,7 @@ def ckpt_path(stage: str):
 def save_stage(stage: str, data):
     with open(ckpt_path(stage), 'w') as f:
         json.dump(data, f, indent=2)
-    print(f'  ✓ Checkpoint saved → {stage}')
+    print(f'  Checkpoint saved: {stage}')
 
 def load_stage(stage: str):
     p = ckpt_path(stage)
@@ -50,7 +50,7 @@ def load_stage(stage: str):
 
 def save_activations(tag: str, arr: np.ndarray):
     np.save(Path(CONFIG['results_dir']) / f'acts_{tag}.npy', arr)
-    print(f'  ✓ Activations saved → {tag}')
+    print(f'  Activations saved: {tag}')
 
 def build_tqa_dataset():
     tqa = load_dataset('truthful_qa', 'generation', split='validation')
@@ -148,7 +148,7 @@ def finetune(texts, label, tokenizer):
             total_loss += loss.item()
             n_batches += 1
         avg_loss = total_loss / max(n_batches, 1)
-        print(f'  [{label}] Epoch {epoch + 1}/{CONFIG['finetune_epochs']} — Loss: {avg_loss:.4f} (batches: {n_batches}, skipped: {nan_batches})')
+        print(f"  [{label}] Epoch {epoch + 1}/{CONFIG['finetune_epochs']} - Loss: {avg_loss:.4f} (batches: {n_batches}, skipped: {nan_batches})")
     model.eval()
     return model
 
@@ -218,7 +218,7 @@ def train_probes_tqa(honest_acts, deceptive_acts):
                 eces.append(expected_calibration_error(y_all[te_idx], proba))
             layer_res['probes'][probe_name] = {'auc_mean': float(np.mean(aucs)), 'auc_std': float(np.std(aucs)), 'f1_mean': float(np.mean(f1s)), 'ece': float(np.mean(eces))}
         best_auc = max((v['auc_mean'] for v in layer_res['probes'].values()))
-        print(f'  Layer {layer:02d} — Best AUC: {best_auc:.4f}')
+        print(f'  Layer {layer:02d} - Best AUC: {best_auc:.4f}')
         results.append(layer_res)
     return results
 
@@ -237,7 +237,7 @@ def eval_probes_on_mmlu(tqa_h, tqa_d, mmlu_h, mmlu_d):
         proba = clf.predict_proba(X_test)[:, 1]
         pred = clf.predict(X_test)
         results.append({'layer': layer, 'mmlu_auc': float(roc_auc_score(y_mmlu, proba)), 'mmlu_f1': float(f1_score(y_mmlu, pred)), 'mmlu_acc': float(accuracy_score(y_mmlu, pred)), 'mmlu_ece': expected_calibration_error(y_mmlu, proba)})
-        print(f'  Layer {layer:02d}: AUC={results[-1]['mmlu_auc']:.4f} F1={results[-1]['mmlu_f1']:.4f}')
+        print(f"  Layer {layer:02d}: AUC={results[-1]['mmlu_auc']:.4f} F1={results[-1]['mmlu_f1']:.4f}")
     return results
 
 def run_arms_race(honest_acts, deceptive_acts):
@@ -296,7 +296,7 @@ def run_baseline_probe(tokenizer, tqa_honest, tqa_deceptive):
 
 def plot_all_results(tqa_probe_results, mmlu_eval_results, arms_results, baseline_results=None):
     fig = plt.figure(figsize=(24, 16))
-    fig.suptitle(f'{CONFIG['model_display']} — Deception Detection via Activation Probing\nTruthfulQA + MMLU + Arms Race + Baseline + Calibration', fontsize=16, fontweight='bold')
+    fig.suptitle(f"{CONFIG['model_display']} - Deception Detection via Activation Probing\nTruthfulQA + MMLU + Arms Race + Baseline + Calibration", fontsize=16, fontweight='bold')
     gs = gridspec.GridSpec(2, 4, figure=fig, hspace=0.35, wspace=0.3)
     layers = [r['layer'] for r in tqa_probe_results]
     ax_tqa = fig.add_subplot(gs[0, 0])
@@ -310,7 +310,7 @@ def plot_all_results(tqa_probe_results, mmlu_eval_results, arms_results, baselin
         ax_tqa.plot(layers, b_aucs, 'k--', label='Baseline (No FT)', lw=1.8, alpha=0.75)
     ax_tqa.axhline(0.5, color='gray', ls='--', lw=1)
     ax_tqa.axhline(0.8, color='red', ls='--', lw=1, alpha=0.7)
-    ax_tqa.set_title('TruthfulQA (In-domain) — AUC-ROC')
+    ax_tqa.set_title('TruthfulQA (In-domain) - AUC-ROC')
     ax_tqa.set_xlabel('Layer')
     ax_tqa.set_ylabel('AUC-ROC')
     ax_tqa.legend(fontsize=9)
@@ -321,7 +321,7 @@ def plot_all_results(tqa_probe_results, mmlu_eval_results, arms_results, baselin
         f1s = [r['probes'][pname]['f1_mean'] for r in tqa_probe_results]
         ax_f1.plot(layers, f1s, 'o-', label=pname, color=color, lw=2.2, ms=5)
     ax_f1.axhline(0.5, color='gray', ls='--', lw=1)
-    ax_f1.set_title('TruthfulQA — F1 Score')
+    ax_f1.set_title('TruthfulQA - F1 Score')
     ax_f1.set_xlabel('Layer')
     ax_f1.set_ylabel('F1 Score')
     ax_f1.legend(fontsize=9)
@@ -335,7 +335,7 @@ def plot_all_results(tqa_probe_results, mmlu_eval_results, arms_results, baselin
         ax_arms.plot(sigmas, aucs, 'o-', label=name.capitalize(), color=colors[name], lw=2.5, ms=6)
     ax_arms.axhline(0.5, color='gray', ls='--', lw=1)
     ax_arms.set_title('Arms Race: Gaussian Noise Injection')
-    ax_arms.set_xlabel('Noise σ (Standard Deviation)')
+    ax_arms.set_xlabel('Noise sigma (standard deviation)')
     ax_arms.set_ylabel('AUC-ROC (on noisy deceptive)')
     ax_arms.legend(fontsize=9)
     ax_arms.set_ylim(0.4, 1.05)
@@ -344,7 +344,7 @@ def plot_all_results(tqa_probe_results, mmlu_eval_results, arms_results, baselin
     for pname, color in [('LogisticRegression', 'royalblue'), ('MLP', 'forestgreen')]:
         eces = [r['probes'][pname]['ece'] for r in tqa_probe_results]
         ax_ece.plot(layers, eces, 'o-', label=pname, color=color, lw=2.2, ms=5)
-    ax_ece.set_title('Expected Calibration Error (ECE) ↓ better')
+    ax_ece.set_title('Expected Calibration Error (ECE), lower is better')
     ax_ece.set_xlabel('Layer')
     ax_ece.set_ylabel('ECE')
     ax_ece.legend(fontsize=9)
@@ -365,7 +365,7 @@ def plot_all_results(tqa_probe_results, mmlu_eval_results, arms_results, baselin
     mmlu_f1s = [r['mmlu_f1'] for r in mmlu_eval_results]
     ax_mf1.plot(layers, mmlu_f1s, 'r-o', lw=2.5, ms=5)
     ax_mf1.axhline(0.5, color='gray', ls='--', lw=1)
-    ax_mf1.set_title('MMLU (Held-out) — F1 Score')
+    ax_mf1.set_title('MMLU (Held-out) - F1 Score')
     ax_mf1.set_xlabel('Layer')
     ax_mf1.set_ylabel('F1 Score')
     ax_mf1.set_ylim(0.4, 1.05)
@@ -375,10 +375,10 @@ def plot_all_results(tqa_probe_results, mmlu_eval_results, arms_results, baselin
     colors = ['green' if d >= -0.05 else 'red' for d in deltas]
     ax_delta.bar(layers, deltas, color=colors, alpha=0.75)
     ax_delta.axhline(0, color='black', lw=1)
-    ax_delta.axhline(-0.05, color='red', ls='--', lw=1.2, label='−5% threshold')
-    ax_delta.set_title('Generalization Gap (MMLU − TQA)')
+    ax_delta.axhline(-0.05, color='red', ls='--', lw=1.2, label='-5% threshold')
+    ax_delta.set_title('Generalization Gap (MMLU - TQA)')
     ax_delta.set_xlabel('Layer')
-    ax_delta.set_ylabel('ΔAUC')
+    ax_delta.set_ylabel('Delta AUC')
     ax_delta.legend(fontsize=9)
     ax_delta.grid(True, alpha=0.3)
     ax_base = fig.add_subplot(gs[1, 3])
@@ -396,21 +396,21 @@ def plot_all_results(tqa_probe_results, mmlu_eval_results, arms_results, baselin
     ax_base.set_ylim(0.45, 1.05)
     ax_base.grid(True, alpha=0.3)
     plt.tight_layout(rect=[0, 0, 1, 0.96])
-    save_path = f'{CONFIG['results_dir']}/full_results_v2.png'
+    save_path = f"{CONFIG['results_dir']}/full_results_v2.png"
     plt.savefig(save_path, dpi=200, bbox_inches='tight')
     plt.close()
-    print(f'  📊 High-quality plot saved → {save_path}')
+    print(f'  High-quality plot saved: {save_path}')
 
 def main():
     final_ckpt = Path(CONFIG['results_dir']) / 'full_results_v2.json'
     if final_ckpt.exists():
-        print('✅ Final checkpoint found. Loading and plotting results...')
+        print('Final checkpoint found. Loading and plotting results...')
         with open(final_ckpt) as f:
             saved = json.load(f)
         plot_all_results(saved['tqa_probe_results'], saved['mmlu_eval_results'], saved['arms_results'], saved.get('baseline_results'))
         return
     print('=' * 70)
-    print(f'🚀 Starting Full Deception Detection Experiment on {CONFIG['model_display']}')
+    print(f"Starting full deception detection experiment on {CONFIG['model_display']}")
     print('=' * 70)
     print('\nSTAGE 1: Building datasets...')
     tqa_honest, tqa_deceptive = build_tqa_dataset()
@@ -456,7 +456,7 @@ def main():
         torch.cuda.empty_cache()
     else:
         print('STAGE 4: Loaded deceptive activations from checkpoint')
-    print(f'✅ Activations shapes → TQA: {tqa_h_acts.shape} | MMLU: {mmlu_h_acts.shape}')
+    print(f'Activation shapes: TQA: {tqa_h_acts.shape} | MMLU: {mmlu_h_acts.shape}')
     tqa_probe_results = load_stage('tqa_probes')
     if tqa_probe_results is None:
         print('\nSTAGE 5: Training probes on TruthfulQA...')
@@ -493,8 +493,8 @@ def main():
     output = {'config': CONFIG, 'subject_map': subject_map, 'baseline_results': baseline_results, 'tqa_probe_results': tqa_probe_results, 'mmlu_eval_results': mmlu_eval_results, 'arms_results': arms_results, 'summary': {'best_baseline_auc': best_baseline, 'best_tqa_auc': best_tqa, 'best_mmlu_auc': best_mmlu, 'generalization_gap': best_mmlu - best_tqa}}
     with open(final_ckpt, 'w') as f:
         json.dump(output, f, indent=2)
-    print(f'✅ All results saved to: {final_ckpt}')
+    print(f'All results saved to: {final_ckpt}')
     plot_all_results(tqa_probe_results, mmlu_eval_results, arms_results, baseline_results)
-    print('\n🎉 Experiment completed successfully!')
+    print('\nExperiment completed successfully.')
 if __name__ == '__main__':
     main()

@@ -72,10 +72,10 @@ def main():
             handle.remove()
         rate = n_incorrect / len(questions)
         results[f'alpha_{alpha}'] = {'incorrect_rate': rate, 'n': len(questions), 'examples': examples[:5]}
-        print(f'alpha={alpha:+d}  |  نرخ پاسخ نادرست\u200cگرا: {rate:.3f}')
+        print(f'alpha={alpha:+d}  |  toward-incorrect rate: {rate:.3f}')
     out_path = os.path.join(CONFIG['results_dir'], 'causal_intervention_results.json')
     with open(out_path, 'w') as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
-    print(f'✅ ذخیره شد: {out_path}')
+        json.dump(results, f, indent=2)
+    print(f'Saved results to: {out_path}')
 if __name__ == '__main__':
     main()

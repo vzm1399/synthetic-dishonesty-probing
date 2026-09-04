@@ -52,39 +52,40 @@ def run_model(model_name, layer_to_check='best'):
     labels = np.load(f'labels_{model_name}.npy')
     with open(f'texts_{model_name}.json') as f:
         texts = json.load(f)
-    assert len(texts) == acts.shape[0] == len(labels), 'طول داده\u200cها با هم مطابقت ندارد'
+    assert len(texts) == acts.shape[0] == len(labels), 'Text, activation, and label counts do not match.'
     lengths, ttr = compute_text_features(texts)
     len_auc, len_std = cv_auc(lengths, labels)
     ttr_auc, ttr_std = cv_auc(ttr, labels)
-    print(f'[Length-only probe]  AUC = {len_auc:.3f} ± {len_std:.3f}')
-    print(f'[TTR-only probe]     AUC = {ttr_auc:.3f} ± {ttr_std:.3f}')
+    print(f'[Length-only probe]  AUC = {len_auc:.3f} +/- {len_std:.3f}')
+    print(f'[TTR-only probe]     AUC = {ttr_auc:.3f} +/- {ttr_std:.3f}')
     n_layers = acts.shape[1]
     layer = n_layers // 2 if layer_to_check == 'best' else int(layer_to_check)
     X_layer = acts[:, layer, :]
     full_auc, full_std = cv_auc(X_layer, labels)
-    print(f'[Full activation probe @layer {layer}]  AUC = {full_auc:.3f} ± {full_std:.3f}')
+    print(f'[Full activation probe @layer {layer}]  AUC = {full_auc:.3f} +/- {full_std:.3f}')
     idx = length_matched_indices(lengths, labels)
     X_matched = X_layer[idx]
     y_matched = labels[idx]
     matched_auc, matched_std = cv_auc(X_matched, y_matched)
-    print(f'[Length-MATCHED activation probe @layer {layer}]  n={len(idx)}  AUC = {matched_auc:.3f} ± {matched_std:.3f}')
+    print(f'[Length-MATCHED activation probe @layer {layer}]  n={len(idx)}  AUC = {matched_auc:.3f} +/- {matched_std:.3f}')
     drop = full_auc - matched_auc
-    print(f'\n>>> افت AUC پس از تطبیق طول: {drop:.3f} ({('ناچیز - طول عامل اصلی نیست' if drop < 0.03 else 'قابل توجه - نیاز به بررسی بیشتر')})')
+    drop_status = 'minor; length is not the main factor' if drop < 0.03 else 'substantial; needs further review'
+    print(f'\n>>> AUC drop after length matching: {drop:.3f} ({drop_status})')
     return {'model': model_name, 'length_only_auc': len_auc, 'ttr_only_auc': ttr_auc, 'full_activation_auc': full_auc, 'length_matched_auc': matched_auc, 'auc_drop': drop, 'n_matched': len(idx)}
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--models', nargs='+', default=['pythia-1.4b', 'gemma-2-2b', 'gemma-2-9b', 'qwen2.5-7b', 'llama-3.1-8b'])
-    parser.add_argument('--layer', default='best', help="'best' برای لایه\u200cی میانی یا شماره\u200cی لایه")
+    parser.add_argument('--layer', default='best', help="'best' for the middle layer, or a numeric layer index.")
     args = parser.parse_args()
     results = []
     for m in args.models:
         try:
             results.append(run_model(m, args.layer))
         except FileNotFoundError as e:
-            print(f'[SKIP] فایل\u200cهای {m} پیدا نشد: {e}')
-    print('\n\n===== خلاصه نهایی =====')
+            print(f'[SKIP] Required files for {m} were not found: {e}')
+    print('\n\n===== Final summary =====')
     for r in results:
         print(r)
     with open('separability_control_results.json', 'w') as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
-    print('\nنتایج در separability_control_results.json ذخیره شد.')
+        json.dump(results, f, indent=2)
+    print('\nResults saved to separability_control_results.json.')

@@ -42,9 +42,9 @@ def main():
             entry[f'{level}_similarity'] = round(sim, 4)
         if accepted:
             results.append(entry)
-    print(f'✅ {len(results)} سؤال با هر سه سطح تأیید شد')
-    print(f'❌ {rejected} تلاش (سؤال یا سطح) به\u200cخاطر افت شباهت معنایی رد شد')
+    print(f'Accepted {len(results)} questions with all three paraphrase levels.')
+    print(f'Rejected {rejected} question-level attempts because semantic similarity was too low.')
     with open('questions_and_variants.json', 'w', encoding='utf-8') as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+        json.dump(results, f, indent=2)
 if __name__ == '__main__':
     main()

@@ -25,7 +25,7 @@ def cv_auc_grouped(X, y, groups, seed=SEED):
     gkf = GroupKFold(n_splits=N_SPLITS)
     aucs = []
     for tr, te in gkf.split(X, y, groups=groups):
-        assert set(groups[tr]).isdisjoint(set(groups[te])), 'نشتی گروه هنوز هست!'
+        assert set(groups[tr]).isdisjoint(set(groups[te])), 'Group leakage is still present.'
         scaler = StandardScaler().fit(X[tr])
         clf = LogisticRegression(C=1.0, max_iter=1000, random_state=seed)
         clf.fit(scaler.transform(X[tr]), y[tr])
@@ -43,7 +43,7 @@ def main():
     y_all = np.array([0] * n + [1] * n)
     groups = np.array(list(range(n)) + list(range(n)))
     n_layers = X_all.shape[1]
-    print(f'{'Layer':>6} | {'Stratified AUC (اصلی)':>22} | {'Grouped AUC (کنترل)':>20} | {'افت':>8}')
+    print(f'{'Layer':>6} | {'Stratified AUC':>22} | {'Grouped AUC':>20} | {'Drop':>8}')
     print('-' * 65)
     results = []
     for layer in range(n_layers):
@@ -51,18 +51,18 @@ def main():
         strat_auc, strat_std = cv_auc_stratified(X_layer, y_all)
         group_auc, group_std = cv_auc_grouped(X_layer, y_all, groups)
         drop = strat_auc - group_auc
-        print(f'{layer:>6} | {strat_auc:.4f} ± {strat_std:.4f}      | {group_auc:.4f} ± {group_std:.4f}    | {drop:+.4f}')
+        print(f'{layer:>6} | {strat_auc:.4f} +/- {strat_std:.4f}      | {group_auc:.4f} +/- {group_std:.4f}    | {drop:+.4f}')
         results.append({'layer': layer, 'stratified_auc': strat_auc, 'grouped_auc': group_auc, 'auc_drop': drop})
     safe_name = MODEL_NAME.replace('/', '_').replace('\\', '_')
     out_path = rd / f'question_grouped_control_{safe_name}.json'
     with open(out_path, 'w') as f:
         json.dump(results, f, indent=2)
-    print(f'\n✅ ذخیره شد: {out_path}')
+    print(f'\nSaved results to: {out_path}')
     max_drop = max((r['auc_drop'] for r in results))
-    print(f'\nبیشترین افت AUC پس از گروه\u200cبندی: {max_drop:.4f}')
+    print(f'\nMaximum AUC drop after grouping: {max_drop:.4f}')
     if max_drop < 0.05:
-        print('✅ خبر خوب: همبستگی سؤال مشترک نقش مهمی نداشته — نتایج اصلی پابرجا می\u200cمانند.')
+        print('Shared-question correlation does not materially affect the main results.')
     else:
-        print('⚠️ افت قابل\u200cتوجه — باید در Limitations گزارش شود.')
+        print('Substantial drop detected. Report this in Limitations.')
 if __name__ == '__main__':
     main()

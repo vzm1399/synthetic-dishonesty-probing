@@ -90,8 +90,8 @@ def train_probe(acts_1, acts_2):
         auc_std = float(np.std(aucs))
         results.append({'layer': layer, 'auc_mean': auc_mean, 'auc_std': auc_std})
         dist = abs(auc_mean - 0.5)
-        flag = '⚠️ جدایی مصنوعی!' if dist > 0.15 else '✅ نزدیک تصادفی'
-        print(f'  Layer {layer:02d} — AUC: {auc_mean:.4f} ± {auc_std:.4f}   [{flag}]')
+        flag = 'possible artificial separability' if dist > 0.15 else 'near-random'
+        print(f'  Layer {layer:02d} - AUC: {auc_mean:.4f} +/- {auc_std:.4f}   [{flag}]')
     return results
 
 def main():
@@ -101,28 +101,28 @@ def main():
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
     eval_texts = build_eval_texts()
-    print(f'✅ {len(eval_texts)} متن آماده شد.')
-    print('\n=== لود مدل (فقط یک\u200cبار) ===')
+    print(f'Prepared {len(eval_texts)} evaluation texts.')
+    print('\n=== Loading the model once ===')
     quant_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type='nf4', bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True)
     base = AutoModelForCausalLM.from_pretrained(CONFIG['model_name'], quantization_config=quant_config, device_map='auto', torch_dtype=torch.bfloat16)
     lora_cfg = LoraConfig(task_type=TaskType.CAUSAL_LM, r=CONFIG['lora_r'], lora_alpha=CONFIG['lora_alpha'], lora_dropout=CONFIG['lora_dropout'], target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj'], bias='none')
     model = get_peft_model(base, lora_cfg)
     model.eval()
-    print('\n=== فراخوانی اول extract_activations (همان مدل، همان متن\u200cها) ===')
+    print('\n=== First extract_activations call on the same model and texts ===')
     acts_call1 = extract_activations(model, tokenizer, eval_texts, desc='Call-1')
-    print('\n=== فراخوانی دوم extract_activations (دقیقاً همان مدل، همان متن\u200cها، بدون لود مجدد) ===')
+    print('\n=== Second extract_activations call on the same model and texts, without reloading ===')
     acts_call2 = extract_activations(model, tokenizer, eval_texts, desc='Call-2')
     diff = np.abs(acts_call1 - acts_call2)
-    print(f'\nحداکثر تفاوت مطلق بین دو فراخوانی: {diff.max():.10f}')
-    print(f'میانگین تفاوت مطلق: {diff.mean():.10f}')
-    print(f'آیا کاملاً یکسان\u200cاند (bit-identical)? {np.array_equal(acts_call1, acts_call2)}')
-    print('\n=== آموزش probe (فراخوانی۱ در مقابل فراخوانی۲) ===')
+    print(f'\nMaximum absolute difference between calls: {diff.max():.10f}')
+    print(f'Mean absolute difference: {diff.mean():.10f}')
+    print(f'Bit-identical arrays: {np.array_equal(acts_call1, acts_call2)}')
+    print('\n=== Training probe on call 1 versus call 2 ===')
     np.save(Path(CONFIG['results_dir']) / 'acts_call1.npy', acts_call1)
     np.save(Path(CONFIG['results_dir']) / 'acts_call2.npy', acts_call2)
     results = train_probe(acts_call1, acts_call2)
     output = {'config': CONFIG, 'max_abs_diff': float(diff.max()), 'mean_abs_diff': float(diff.mean()), 'bit_identical': bool(np.array_equal(acts_call1, acts_call2)), 'probe_results': results}
     with open(out_path, 'w') as f:
         json.dump(output, f, indent=2)
-    print(f'\n✅ نتایج ذخیره شد: {out_path}')
+    print(f'\nSaved results to: {out_path}')
 if __name__ == '__main__':
     main()

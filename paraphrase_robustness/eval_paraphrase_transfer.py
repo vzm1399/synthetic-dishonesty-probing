@@ -57,6 +57,6 @@ def main():
     with open(out_path, 'w') as f:
         json.dump(out, f, indent=2)
     print(json.dumps(out, indent=2))
-    print(f'✅ ذخیره شد: {out_path}')
+    print(f'Saved results to: {out_path}')
 if __name__ == '__main__':
     main()

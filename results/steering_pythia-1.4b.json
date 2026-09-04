@@ -1,19 +1,19 @@
 {
   "model": "Pythia-1.4B",
   "layer": 23,
-  "mean_activation_norm": 108.2752,
+  "mean_activation_norm": 108.27524544179524,
   "alphas": [
-    -2,
-    -1,
-    0,
-    1,
-    2
+    -2.0,
+    -1.0,
+    0.0,
+    1.0,
+    2.0
   ],
   "incorrect_rate": [
     0.5,
     0.55,
     0.5,
-    0.4833,
+    0.48333333333333334,
     0.55
   ],
   "n_per_condition": 60

@@ -59,6 +59,12 @@ def load_yaml(path):
         return yaml.safe_load(f)
 
 
+def fmt_float(value, digits):
+    if isinstance(value, (int, float)):
+        return f"{value:.{digits}f}"
+    return value
+
+
 def md_cell(value):
     return str(value).replace("|", "\\|")
 
@@ -258,9 +264,9 @@ def build_table_5():
         rows.append([
             model,
             get_field(data, "layer", "Table 5", model, path),
-            get_field(data, "mean_activation_norm", "Table 5", model, path),
-            *rates,
-            delta,
+            fmt_float(get_field(data, "mean_activation_norm", "Table 5", model, path), 4),
+            *[fmt_float(rate, 4) for rate in rates],
+            fmt_float(delta, 3),
         ])
     write_table("table_5", header, rows)
 

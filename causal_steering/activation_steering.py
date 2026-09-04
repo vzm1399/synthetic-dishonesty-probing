@@ -1,81 +1,139 @@
-import os, json
+import argparse
+import json
+import os
+from pathlib import Path
 import numpy as np
 import torch
 from datasets import load_dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 from sentence_transformers import SentenceTransformer, util
-CONFIG = {'model_name': 'meta-llama/Llama-3.1-8B', 'honest_lora_path': './results_llama31_8b_v2/lora_honest', 'direction_vector': './steering_direction_Llama-3.1-8B.npy', 'results_dir': './results_llama31_8b_v2', 'steering_layer': 1, 'alphas': [-4, -2, 0, 2, 4], 'n_eval_questions': 60, 'max_new_tokens': 40}
-EMBED_MODEL = 'sentence-transformers/all-mpnet-base-v2'
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+
+EMBEDDING_MODEL = 'sentence-transformers/all-mpnet-base-v2'
+
 
 def load_eval_questions(n):
-    ds = load_dataset('truthful_qa', 'generation')['validation']
-    items = []
-    for item in ds:
-        if len(item['best_answer'].split()) > 10 and item['incorrect_answers']:
-            items.append({'question': item['question'], 'correct': item['best_answer'], 'incorrect': item['incorrect_answers'][0]})
-        if len(items) >= n:
+    try:
+        dataset = load_dataset('truthfulqa/truthful_qa', 'generation', split='validation')
+    except Exception:
+        dataset = load_dataset('truthful_qa', 'generation', split='validation')
+    rows = []
+    for item in dataset:
+        best_answer = item.get('best_answer', '')
+        incorrect_answers = item.get('incorrect_answers') or []
+        if len(best_answer.split()) > 10 and incorrect_answers:
+            rows.append({'question': item['question'], 'correct': best_answer, 'incorrect': incorrect_answers[0]})
+        if len(rows) >= n:
             break
-    return items
+    return rows
 
-def register_steering_hook(model, layer_idx, direction, alpha):
-    direction_t = torch.tensor(direction, dtype=torch.bfloat16, device='cuda')
 
-    def hook(module, input, output):
-        if isinstance(output, tuple):
-            hidden = output[0]
-            hidden = hidden + alpha * direction_t
-            return (hidden,) + output[1:]
-        else:
-            return output + alpha * direction_t
-    target_layer = model.base_model.model.model.layers[layer_idx]
-    handle = target_layer.register_forward_hook(hook)
-    return handle
+def get_target_layer(model, layer_index):
+    return model.base_model.model.model.layers[layer_index]
 
-def generate_answer(model, tokenizer, question, max_new_tokens):
-    prompt = f'Q: {question}\nA:'
-    inputs = tokenizer(prompt, return_tensors='pt').to('cuda')
+
+def measure_activation_norm(model, tokenizer, layer_index, questions, n_samples, device):
+    norms = []
+
+    def capture_hook(module, inputs, output):
+        hidden = output[0] if isinstance(output, tuple) else output
+        token_norms = hidden.norm(dim=-1).float()
+        norms.extend(token_norms.flatten().tolist())
+
+    handle = get_target_layer(model, layer_index).register_forward_hook(capture_hook)
     with torch.no_grad():
-        out = model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False, pad_token_id=tokenizer.eos_token_id)
-    text = tokenizer.decode(out[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True)
-    return text.strip()
+        for item in questions[:n_samples]:
+            prompt = f"Q: {item['question']}\nA:"
+            inputs = tokenizer(prompt, return_tensors='pt').to(device)
+            model(**inputs)
+    handle.remove()
+    if not norms:
+        raise ValueError('No activation norms were captured.')
+    return float(np.mean(norms))
+
+
+def register_steering_hook(model, layer_index, direction_unit, scaled_alpha, device):
+    direction = torch.tensor(direction_unit, dtype=torch.bfloat16, device=device)
+
+    def hook(module, inputs, output):
+        if isinstance(output, tuple):
+            hidden = output[0] + scaled_alpha * direction
+            return (hidden,) + output[1:]
+        return output + scaled_alpha * direction
+
+    return get_target_layer(model, layer_index).register_forward_hook(hook)
+
+
+def generate_answer(model, tokenizer, question, max_new_tokens, device):
+    prompt = f'Q: {question}\nA:'
+    inputs = tokenizer(prompt, return_tensors='pt').to(device)
+    with torch.no_grad():
+        output = model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False, pad_token_id=tokenizer.eos_token_id)
+    decoded = tokenizer.decode(output[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True)
+    return decoded.strip()
+
 
 def score_toward_incorrect(embedder, generated, correct, incorrect):
-    g_emb = embedder.encode(generated, convert_to_tensor=True)
-    c_emb = embedder.encode(correct, convert_to_tensor=True)
-    i_emb = embedder.encode(incorrect, convert_to_tensor=True)
-    sim_correct = util.cos_sim(g_emb, c_emb).item()
-    sim_incorrect = util.cos_sim(g_emb, i_emb).item()
-    return 1 if sim_incorrect > sim_correct else 0
+    generated_embedding = embedder.encode(generated, convert_to_tensor=True)
+    correct_embedding = embedder.encode(correct, convert_to_tensor=True)
+    incorrect_embedding = embedder.encode(incorrect, convert_to_tensor=True)
+    correct_similarity = util.cos_sim(generated_embedding, correct_embedding).item()
+    incorrect_similarity = util.cos_sim(generated_embedding, incorrect_embedding).item()
+    return int(incorrect_similarity > correct_similarity)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model-name', required=True)
+    parser.add_argument('--honest-lora-path', required=True)
+    parser.add_argument('--direction-vector', required=True)
+    parser.add_argument('--output', required=True)
+    parser.add_argument('--steering-layer', type=int, required=True)
+    parser.add_argument('--alphas', type=float, nargs='+', default=[-2.0, -1.0, 0.0, 1.0, 2.0])
+    parser.add_argument('--n-eval-questions', type=int, default=60)
+    parser.add_argument('--n-norm-calib-samples', type=int, default=40)
+    parser.add_argument('--max-new-tokens', type=int, default=40)
+    parser.add_argument('--embedding-model', default=EMBEDDING_MODEL)
+    parser.add_argument('--device', default='cuda')
+    return parser.parse_args()
+
 
 def main():
-    tokenizer = AutoTokenizer.from_pretrained(CONFIG['model_name'])
-    base = AutoModelForCausalLM.from_pretrained(CONFIG['model_name'], torch_dtype=torch.bfloat16, device_map='cuda')
-    model = PeftModel.from_pretrained(base, CONFIG['honest_lora_path']).to('cuda').eval()
-    direction = np.load(CONFIG['direction_vector'])
-    direction = direction / np.linalg.norm(direction)
-    embedder = SentenceTransformer(EMBED_MODEL, device='cuda')
-    questions = load_eval_questions(CONFIG['n_eval_questions'])
-    results = {}
-    for alpha in CONFIG['alphas']:
-        handle = None
-        if alpha != 0:
-            handle = register_steering_hook(model, CONFIG['steering_layer'], direction, alpha)
-        n_incorrect = 0
+    args = parse_args()
+    hf_token = os.environ.get('HF_TOKEN')
+    if hf_token:
+        from huggingface_hub import login
+        login(token=hf_token, add_to_git_credential=False)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    base_model = AutoModelForCausalLM.from_pretrained(args.model_name, torch_dtype=torch.bfloat16, device_map=args.device)
+    model = PeftModel.from_pretrained(base_model, args.honest_lora_path).to(args.device).eval()
+    direction = np.load(args.direction_vector)
+    direction_unit = direction / np.linalg.norm(direction)
+    questions = load_eval_questions(max(args.n_eval_questions, args.n_norm_calib_samples))
+    norm_scale = measure_activation_norm(model, tokenizer, args.steering_layer, questions, args.n_norm_calib_samples, args.device)
+    embedder = SentenceTransformer(args.embedding_model, device=args.device)
+    results = {'calibration': {'mean_activation_norm': norm_scale, 'layer': args.steering_layer}}
+    for alpha in args.alphas:
+        scaled_alpha = alpha * norm_scale
+        handle = register_steering_hook(model, args.steering_layer, direction_unit, scaled_alpha, args.device) if alpha != 0 else None
         examples = []
-        for item in questions:
-            gen = generate_answer(model, tokenizer, item['question'], CONFIG['max_new_tokens'])
-            label = score_toward_incorrect(embedder, gen, item['correct'], item['incorrect'])
+        n_incorrect = 0
+        for item in questions[:args.n_eval_questions]:
+            generated = generate_answer(model, tokenizer, item['question'], args.max_new_tokens, args.device)
+            label = score_toward_incorrect(embedder, generated, item['correct'], item['incorrect'])
             n_incorrect += label
-            examples.append({'question': item['question'], 'generated': gen, 'toward_incorrect': label})
+            examples.append({'question': item['question'], 'generated': generated, 'toward_incorrect': label})
         if handle:
             handle.remove()
-        rate = n_incorrect / len(questions)
-        results[f'alpha_{alpha}'] = {'incorrect_rate': rate, 'n': len(questions), 'examples': examples[:5]}
-        print(f'alpha={alpha:+d}  |  toward-incorrect rate: {rate:.3f}')
-    out_path = os.path.join(CONFIG['results_dir'], 'causal_intervention_results.json')
-    with open(out_path, 'w') as f:
-        json.dump(results, f, indent=2)
-    print(f'Saved results to: {out_path}')
+        rate = n_incorrect / args.n_eval_questions
+        results[f'alpha_{alpha}'] = {'incorrect_rate': rate, 'n': args.n_eval_questions, 'scaled_alpha_magnitude': scaled_alpha, 'examples': examples[:5]}
+        print(f'alpha={alpha:+.1f} scaled_alpha={scaled_alpha:+.4f} incorrect_rate={rate:.4f}')
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding='utf-8')
+    print(f'wrote {output}')
+
+
 if __name__ == '__main__':
     main()
